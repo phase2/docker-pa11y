@@ -11,22 +11,14 @@ LABEL maintainer="Phase2 <outrigger@phase2technology.com>" \
   org.label-schema.docker.debug="docker exec -it $CONTAINER bash" \
   org.label-schema.schema-version="1.0"
 
-# It's a good idea to use dumb-init to help prevent zombie chrome processes.
-ADD https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64 /usr/local/bin/dumb-init
-RUN chmod +x /usr/local/bin/dumb-init
+USER root
 
 # Let's get pa11y v5 in here.
-RUN yarn global add pa11y@beta
-
-# Add user so we don't need --no-sandbox.
-RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
-    && mkdir -p /home/pptruser/Downloads \
-    && chown -R pptruser:pptruser /home/pptruser \
-    && chown -R pptruser:pptruser /screenshots \
-    && chown -R pptruser:pptruser /usr/local/share/.config/yarn/global/node_modules
+RUN yarn global add pa11y@5
+RUN yarn global add pa11y-ci@2
 
 USER pptruser
 
-ENTRYPOINT ["dumb-init", "--", "pa11y"]
+ENTRYPOINT ["dumb-init", "--"]
 
 CMD ["-h"]

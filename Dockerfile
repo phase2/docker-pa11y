@@ -14,11 +14,8 @@ LABEL maintainer="Phase2 <outrigger@phase2technology.com>" \
 USER root
 
 # Let's get pa11y v5 in here.
-RUN yarn global add pa11y@5
-RUN yarn global add pa11y-ci@2
+RUN yarn global add pa11y@5 pa11y-ci@2
 
 USER pptruser
 
 ENTRYPOINT ["dumb-init", "--"]
-
-CMD ["-h"]

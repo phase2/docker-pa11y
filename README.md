@@ -7,6 +7,10 @@
 This Docker image provides the use of [pa11y v5](https://github.com/pa11y/pa11y).
 (Note that the v5 version of that project is currently not in the master branch.)
 
+As of version 2, a variant (with tags suffixed `-ci`) ships with the [pa11y-ci](https://github.com/pa11y/pa11y-ci) tool.
+
+Version 2 of outrigger/pa11y Docker image provides stable versions of pa11y v5 and pa11y-ci v2.
+
 ## Usage Examples
 
 ### Docker Run
@@ -16,7 +20,7 @@ given URL.
 
 ```
 docker run -i --rm --cap-add=SYS_ADMIN \
-  --name pa11y outrigger/pa11y:1 http://outrigger.sh
+  --name pa11y outrigger/pa11y:2 http://outrigger.sh
 ```
 
 ### Docker-Compose - Simple
@@ -27,13 +31,15 @@ This is the docker-compose style to execute the same docker run command as above
 version: '3.3'
 services:
   pa11y:
-    image: outrigger/pa11y:1
-    container_name: projectname_${DOCKER_ENV:-local}_pa11y
+    image: outrigger/pa11y:2
     command: http://outrigger.sh
     network_mode: bridge
     cap_add:
       - SYS_ADMIN
 ```
+
+This configuration can be used via `docker-compose run --rm pa11y`.
+
 
 ### Docker-Compose - Project
 
@@ -78,6 +84,80 @@ pa11y('http://outrigger.sh', {
 });
 
 browser.close();
+```
+
+### pa11y-ci
+
+This is a variant of pa11y that allows JSON or JS configuration of URLs to be
+scanned. It will aggregate the results as well, allowing a CI process to process
+an entire website.
+
+#### Docker Run
+
+You can use docker run to trigger your pa11y-ci execution in the same manner
+pa11y operates. However, you will need to position a pa11y-ci configuration file
+in the container.
+
+To start, you might copy pa11yci.example.json to your local directory, and run
+the command like so:
+
+```
+docker run -i --rm --cap-add=SYS_ADMIN \
+  -v $PWD/pa11yci.example.json:/app/.pa11yci
+  --name pa11y-ci outrigger/pa11y:2-ci "--json"
+```
+
+You may notice the use of the --json flag: this instructs pa11y-ci to output
+the test results in a machine-parseable JSON format. It is not built into the
+Docker image to allow the full range of pa11y-ci options to be explored.
+
+#### Docker Compose - Simple
+
+This is the docker-compose style to execute the same docker run command as above.
+
+```yaml
+version: '3.3'
+services:
+  pa11y:
+    image: outrigger/pa11y:2-ci
+    command: "--json"
+    volumes:
+      - ./pa11yci.example.json:/app/.pa11yci
+    network_mode: bridge
+    cap_add:
+      - SYS_ADMIN
+```
+
+This configuration can be used via `docker-compose run --rm pa11y-ci`.
+
+#### Capture the Report
+
+To capture the pa11y-ci report (such as for further rendering into a dashboard),
+you can pipe the output of your execution into a file:
+
+```
+docker-compose run --rm pa11y-ci > report.json
+```
+
+If you want the command to be "all-in-one", you can also make further changes
+to build the file output into your docker-compose configuration and use bind
+mounts to export the file to the host machine:
+
+```yaml
+version: '3.3'
+services:
+  pa11y:
+    image: outrigger/pa11y:2-ci
+    # Override the entrypoint so we can wrap the pa11y-ci command in a subshell.
+    entrypoint: ["dumb-init", "--"]
+    # Reroute the output report to a file as part of executing the command.
+    command: "bash -c 'pa11y-ci --json > /app/reports/report.json'"
+    volumes:
+      - ./pa11yci.example.json:/app/.pa11yci
+      - ./reports:/app/reports
+    network_mode: bridge
+    cap_add:
+      - SYS_ADMIN
 ```
 
 ### Screenshot Example

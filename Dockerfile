@@ -13,8 +13,8 @@ LABEL maintainer="Phase2 <outrigger@phase2technology.com>" \
 
 USER root
 
-# Let's get pa11y v5 in here.
-RUN yarn global add pa11y@5 pa11y-ci@2
+# Let's get pa11y v5 in here. Also adds http-server for running pa11y against staticly-generated HTML.
+RUN yarn global add pa11y@5 pa11y-ci@2 http-server
 
 USER pptruser
 
